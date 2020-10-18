@@ -1,18 +1,18 @@
 /*
-    Assignment 2 Problem 2
+    Assignment 2 Problem 3
     Author: Shaan Arora C3236359
-    Restaraunt.java
-    Simulates and runs a restaraunt within specific rules and policies such that it is COVID safe
+    MonitoredRestaraunt.java
+    Exact same as Restaraunt.java except for the fact that a monitor object is used instead of a semaphore object
+    A RestarauntMonitor object is used to behave very similarly to how a semaphore would
  */
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Queue;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Restaraunt
+public class MonitoredRestaraunt
 {
     //Private Member Variables
 
@@ -25,16 +25,15 @@ public class Restaraunt
     //Flag for if the next customer can be seated
     private boolean customerCanBeSeated;
     //A constant unchangeable list of the all the customers
-    private ArrayList<Customer> masterList;
+    private ArrayList<MonitoredCustomer> masterList;
     //A list to keep track of how many customers are currently seated
-    private ArrayList<Customer> seatedCustomers;
+    private ArrayList<MonitoredCustomer> seatedCustomers;
     //A queue of customers currently waiting
-    private Queue<Customer> waitingCustomers;
-    //Semaphore object acting as the resource the Customer threads have to acquire/release
-    public Semaphore seats;
+    private Queue<MonitoredCustomer> waitingCustomers;
+    //public Semaphore seats;
+    public RestarauntMonitor monitor = new RestarauntMonitor();
 
-    //Default Constructor
-    public Restaraunt()
+    public MonitoredRestaraunt()
     {
         //globalTime and TOTAL_SEATS are already at their intiali value
         //seatsLeft will start at the maximum number of seats and then be decremented as customers come in
@@ -45,13 +44,11 @@ public class Restaraunt
         seatedCustomers = new ArrayList<>(TOTAL_SEATS);
         waitingCustomers = new ArrayDeque<>();
         globalTime = new AtomicInteger(0);
-        seats = new Semaphore(5, true);
+        //seats = new Semaphore(5, true);
     }
 
     //Runs all CustomerThreads and simulates the restaraunt
-    //Preconditions:  masterList.size() != 0
-    //Postconditions:  runs all Customer objects in masterList concurrently with threads to simulate a COVID safe restaraunt
-    public void runRestaraunt()
+    public void runRestaraunt() throws InterruptedException
     {
         customerCanBeSeated = true;
         //Counter for the number of customers finished
@@ -70,13 +67,13 @@ public class Restaraunt
             //Iterate through seated customers
             for (int i = 0; i < seatedCustomers.size(); i++)
             {
-                Customer temp = seatedCustomers.get(i);
+                MonitoredCustomer temp = seatedCustomers.get(i);
                 if (globalTime.get() >= temp.getLeavingTime())
                 {
                     //if the leavingTime of the Customer owned by the CustomerThread ct is the same or greater than the global time
                     //then remove it from the listed of seatedCustomers
                     seatedCustomers.remove(temp);
-                    seats.release(1);
+                    leave();
                     //Update the counter for the number of finished customers
                     finishedCustomers++;
                     //Update how many seats are left
@@ -106,7 +103,7 @@ public class Restaraunt
                 //A seat will be taken by the customer waiting
                 seatsLeft--;
                 //Remove a waiting customer from the queue
-                Customer temp = waitingCustomers.remove();
+                MonitoredCustomer temp = waitingCustomers.remove();
                 //Update the time that customer was seated
                 temp.setSeatedTime(globalTime.get());
                 //Start the thread
@@ -124,23 +121,24 @@ public class Restaraunt
         }
     }
 
+
     //Populate function for masterList
     //Preconditions:  Restaraunt has been declared & intialized
     //Postconditions: Creates a new CustomerThread with a reference to c and adds it to the masterList of the current Restaraunt
-    public void addCustomer(Customer c)
+    public void addCustomer(MonitoredCustomer c)
     {
         masterList.add(c);
     }
 
-    //Wrapper function for the Semaphore object so a permit/seat can be acquired
-    //Preconditions:  Restaraunt object has been declared and initalized
-    //Postconditions: A permit from the Semaphore object is acquired
-    public void getSeat() throws InterruptedException {seats.acquire(1);}
+    public void getSeat() throws InterruptedException
+    {
+        monitor.pushToStack(1);
+    }
 
-    //Wrapper function for the Semaphore object's release function() so that a permit can be released
-    //Preconditions:  Restaraunt object has been declared and initalized
-    //Postconditions: A permit from the Semaphore object is acquired
-    public void leave() {seats.release(1);}
+    public void leave() throws InterruptedException
+    {
+        monitor.popFromStack();
+    }
 
     //Output Function
     //Preconditions:  masterList.size() != 0
@@ -149,7 +147,7 @@ public class Restaraunt
     {
         assert this.masterList.size() > 0;
         System.out.format("%-11s%-12s%-8s%-6s%n", "Customers", "Arrives", "Seats", "Leaves");
-        for(Customer c : masterList)
+        for(MonitoredCustomer c : masterList)
         {
             System.out.print(c);
         }

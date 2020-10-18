@@ -7,12 +7,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 
-public class P2
+public class P3
 {
     public static void main(String[] args)
     {
         assert args.length > 0 : "Command Line Arguments expected";
-        final Restaraunt restaraunt = new Restaraunt();
+        final MonitoredRestaraunt restaraunt = new MonitoredRestaraunt();
         String fileName = args[0];
         File f = new File(fileName);
         try
@@ -26,7 +26,7 @@ public class P2
                 if(line.equalsIgnoreCase("END")) break;
                 //Remove all spaces from the line read in
                 String[] output = line.split(" ");
-                Customer temp = new Customer(restaraunt);
+                MonitoredCustomer temp = new MonitoredCustomer(restaraunt);
                 //Should really do error checking to make sure that
                 //  the first value of output is actually a number, the second is actually a valid ID and the third is an integer
                 //Create a Customer object
@@ -40,9 +40,25 @@ public class P2
             scan.close();
             restaraunt.runRestaraunt();
             restaraunt.displayRestaraunt();
-        } catch (FileNotFoundException e)
+        } catch (FileNotFoundException | InterruptedException e)
         {
             e.printStackTrace();
         }
+        /*RestarauntMonitor monitor = new RestarauntMonitor();
+        try
+        {
+            monitor.pushToStack(1);
+            monitor.pushToStack(2);
+            monitor.pushToStack(3);
+            monitor.pushToStack(4);
+            monitor.pushToStack(5);
+            System.out.println(monitor.popFromStack());
+            System.exit(-1);
+        } catch (InterruptedException e)
+        {
+
+            e.printStackTrace();
+        }*/
+
     }
 }

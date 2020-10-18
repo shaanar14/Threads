@@ -8,7 +8,7 @@
 
 import java.util.concurrent.TimeUnit;
 
-public class Customer implements Runnable
+public class MonitoredCustomer implements Runnable
 {
     //Private member variables
 
@@ -23,10 +23,10 @@ public class Customer implements Runnable
     //The time the customer left
     private int leavingTime;
     //Resource a Customer will try to access
-    private Restaraunt diningAt;
+    private MonitoredRestaraunt diningAt;
 
     //Default Constructor
-    public Customer()
+    public MonitoredCustomer()
     {
         this.id = "";
         this.arrivalTime = 0;
@@ -36,7 +36,7 @@ public class Customer implements Runnable
     }
 
     //Parameter constructor
-    public Customer(Restaraunt r)
+    public MonitoredCustomer(MonitoredRestaraunt r)
     {
         this.id = "";
         this.arrivalTime = 0;
@@ -69,7 +69,7 @@ public class Customer implements Runnable
     }
 
     //Release the permit/seat it was using
-    public void release()
+    public void release() throws InterruptedException
     {
         this.diningAt.leave();
     }
